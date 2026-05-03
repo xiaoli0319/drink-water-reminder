@@ -27,11 +27,10 @@
 
 ## 📸 截图
 
-<!-- 替换为实际截图 -->
-<!-- ![reminder](./screenshots/reminder.png) -->
-<!-- ![settings](./screenshots/settings.png) -->
-
-> 提示：可以使用 GreenShot、ShareX 等工具截图后放入 `screenshots/` 目录。
+| 喝水提醒弹窗 | 设置面板 |
+|:---:|:---:|
+| ![喝水提醒](screenshots/reminder.png) | ![设置面板](screenshots/settings.png) |
+| 定时弹出提醒窗口 | 自定义提醒间隔（1–120 分钟） |
 
 ## 🚀 快速开始
 
@@ -59,12 +58,6 @@ npm start
 ```bash
 # Windows
 rm -rf dist && ELECTRON_MIRROR="https://npmmirror.com/mirrors/electron/" npx @electron/packager . "喝水提醒" --platform=win32 --arch=x64 --out=dist --overwrite --icon=water.ico --extra-resource=water.png
-
-# macOS
-rm -rf dist && npx @electron/packager . "喝水提醒" --platform=darwin --arch=x64 --out=dist --overwrite --icon=water.png --extra-resource=water.png
-
-# Linux
-rm -rf dist && npx @electron/packager . "喝水提醒" --platform=linux --arch=x64 --out=dist --overwrite --extra-resource=water.png
 ```
 
 > 💡 国内用户可通过 `ELECTRON_MIRROR` 环境变量使用 npmmirror 镜像加速下载。
@@ -84,6 +77,9 @@ rm -rf dist && npx @electron/packager . "喝水提醒" --platform=linux --arch=x
 ├── package.json       # 项目配置
 ├── water.png          # 托盘/弹窗图标
 ├── water.ico          # Windows 打包图标
+├── screenshots/       # 截图
+│   ├── reminder.png   # 提醒弹窗截图
+│   └── settings.png   # 设置面板截图
 └── README.md
 ```
 
