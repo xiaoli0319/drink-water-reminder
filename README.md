@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="water.png" alt="logo" width="120" />
-</p>
-
 <h1 align="center">💧 喝水提醒</h1>
 
 <p align="center">
