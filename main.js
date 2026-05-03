@@ -1,7 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs')
-const zlib = require('zlib')
 
 // --- 单实例锁 ---
 if (!app.requestSingleInstanceLock()) { app.quit(); process.exit(0) }
@@ -12,34 +11,8 @@ let interval = 30
 function loadCfg() { try { interval = JSON.parse(fs.readFileSync(CFG, 'utf8')).interval || 30 } catch (_) {} }
 function saveCfg() { fs.writeFileSync(CFG, JSON.stringify({ interval })) }
 
-// --- 生成 16x16 蓝色托盘图标 PNG ---
-function makeIconPNG([r, g, b]) {
-  const W = 16, H = 16
-  const raw = Buffer.alloc(H * (1 + W * 4))
-  for (let y = 0; y < H; y++) {
-    raw[y * 65] = 0
-    for (let x = 0; x < W; x++) {
-      const o = y * 65 + 1 + x * 4
-      raw[o] = r; raw[o + 1] = g; raw[o + 2] = b; raw[o + 3] = 255
-    }
-  }
-  const idat = zlib.deflateSync(raw)
-  const crcT = new Uint32Array(256)
-  for (let i = 0; i < 256; i++) { let c = i; for (let j = 0; j < 8; j++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; crcT[i] = c }
-  const crc = d => { let c = 0xFFFFFFFF; for (let i = 0; i < d.length; i++) c = crcT[(c ^ d[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0 }
-  const chk = (t, d) => {
-    const b = Buffer.alloc(12 + d.length)
-    b.writeUInt32BE(d.length, 0); b.write(t, 4); d.copy(b, 8)
-    b.writeUInt32BE(crc(Buffer.concat([Buffer.from(t), d])), 8 + d.length)
-    return b
-  }
-  const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(W, 0); ihdr.writeUInt32BE(H, 4); ihdr[8] = 8; ihdr[9] = 6
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chk('IHDR', ihdr), chk('IDAT', idat), chk('IEND', Buffer.alloc(0))])
-}
-
 // --- 全局变量 ---
-let tray, cfgWin, remindWin, timer
+let tray, cfgWin, remindWin, timer, iconBase64 = ''
 
 // --- 弹窗提醒（置顶）---
 function showReminder() {
@@ -53,10 +26,10 @@ function showReminder() {
   remindWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
     <!DOCTYPE html><meta charset="UTF-8"><style>
       *{margin:0;box-sizing:border-box}body,html{overflow:hidden;height:100%}body{font-family:'Microsoft YaHei',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;background:#fff}
-      .icon{font-size:48px;margin-bottom:10px}.title{font-size:20px;font-weight:bold;color:#333}.tip{font-size:13px;color:#999;margin:8px 0 14px}
+      .icon{width:48px;height:48px;margin-bottom:10px}.title{font-size:20px;font-weight:bold;color:#333}.tip{font-size:13px;color:#999;margin:8px 0 14px}
       button{padding:8px 36px;font-size:14px;border:none;background:#2196F3;color:#fff;border-radius:6px;cursor:pointer}
     </style>
-    <div class="icon">💧</div>
+    <img class="icon" src="data:image/png;base64,${iconBase64}"></img>
     <div class="title">该喝水啦！</div>
     <div class="tip">每隔 ${interval} 分钟提醒一次 · 保持健康</div>
     <button onclick="require('electron').ipcRenderer.send('close-reminder')">知道了</button>
@@ -117,9 +90,11 @@ app.on('window-all-closed', () => {})
 app.whenReady().then(() => {
   loadCfg()
 
-  // 系统托盘
-  const icon = nativeImage.createFromBuffer(makeIconPNG([66, 133, 244]))
-  tray = new Tray(icon)
+  // 读取图标 (托盘 + 弹窗共用)
+  const iconPath = app.isPackaged ? path.join(process.resourcesPath, 'water.png') : path.join(__dirname, 'water.png')
+  iconBase64 = fs.readFileSync(iconPath).toString('base64')
+  const trayIcon = nativeImage.createFromPath(iconPath)
+  tray = new Tray(trayIcon)
   tray.setToolTip('喝水提醒')
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: '立即提醒', click: showReminder },
