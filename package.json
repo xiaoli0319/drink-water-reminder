@@ -14,6 +14,12 @@
       "target": [
         "deb"
       ],
+      "extraResources": [
+        {
+          "from": "water.png",
+          "to": "water.png"
+        }
+      ],
       "icon": "water.png"
     }
   },
