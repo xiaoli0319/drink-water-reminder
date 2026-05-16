@@ -2,12 +2,25 @@
   "name": "drink-water-reminder",
   "version": "1.0.0",
   "main": "main.js",
+  "author": "xl <1528079407@qq.com>",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build:linux": "electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.xl.drinkwater",
+    "productName": "喝水提醒",
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "icon": "water.png"
+    }
   },
   "devDependencies": {
     "@electron/packager": "^20.0.0",
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^26.8.1"
   },
   "license": "MIT"
 }
